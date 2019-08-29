@@ -1,3 +1,11 @@
+checkout:
+	git clone https://github.com/ipfs/testground.git
+	mkdir -p targets
+	cd targets && git clone https://github.com/ipfs/go-ipfs.git
+
+distclean:
+	rm -rf testground targets
+
 run:
 	go run main.go
 
