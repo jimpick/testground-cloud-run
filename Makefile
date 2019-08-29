@@ -1,7 +1,11 @@
 checkout:
 	git clone https://github.com/ipfs/testground.git
+	cd testground && git checkout jim/workaround-node-cleanup
 	mkdir -p targets
 	cd targets && git clone https://github.com/ipfs/go-ipfs.git
+
+build-targets:
+	cd targets/go-ipfs && make build
 
 distclean:
 	rm -rf testground targets
@@ -10,10 +14,13 @@ run:
 	go run main.go
 
 docker-build:
-	docker build -t jimpick/testcloud-web .
+	docker build -t jimpick/testground-web .
 
 docker-run:
-	docker run -p 8099:8099 jimpick/testcloud-web 
+	docker run -p 8099:8099 --name testground jimpick/testground-web
+
+docker-rm:
+	docker rm testground
 
 gcloud-build:
 	go mod tidy
