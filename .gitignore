@@ -1,0 +1,4 @@
+*.swp
+vendor
+debug
+log.out
