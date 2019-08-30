@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -34,14 +36,42 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 
 	cmd := exec.Command("./smlbench")
 	cmd.Dir = "/home/testground/testground/plans/smlbench/cmd"
-	stdoutStderr, err := cmd.CombinedOutput()
+
+	var stdoutBuf, stderrBuf bytes.Buffer
+	stdoutIn, _ := cmd.StdoutPipe()
+	stderrIn, _ := cmd.StderrPipe()
+
+	stdout := io.MultiWriter(os.Stdout, &stdoutBuf)
+	stderr := io.MultiWriter(os.Stderr, &stderrBuf)
+
+	err := cmd.Start()
 	if err != nil {
 		http.Error(w, "500 Exception", http.StatusInternalServerError)
-		log.Fatal(err)
+		log.Print(err)
 		return
 	}
 
-	output := strings.Split(string(stdoutStderr), "\n")
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	var errStdout, errStderr error
+
+	go func() {
+		_, errStdout = io.Copy(stdout, stdoutIn)
+		wg.Done()
+	}()
+
+	_, errStderr = io.Copy(stderr, stderrIn)
+	wg.Wait()
+
+	err = cmd.Wait()
+	if err != nil || errStdout != nil || errStderr != nil {
+		http.Error(w, "500 Exception", http.StatusInternalServerError)
+		log.Print(err)
+		return
+	}
+
+	output := strings.Split(string(stdoutBuf.Bytes()), "\n")
 	for _, line := range output {
 		lines = append(lines, line)
 	}

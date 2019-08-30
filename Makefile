@@ -1,6 +1,6 @@
 checkout:
 	git clone https://github.com/ipfs/testground.git
-	cd testground && git checkout jim/workaround-node-cleanup
+	cd testground && git checkout jim/cloud-run-experiment
 	mkdir -p targets
 	cd targets && git clone https://github.com/ipfs/go-ipfs.git
 
