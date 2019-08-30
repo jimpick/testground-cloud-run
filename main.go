@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"strings"
 )
 
@@ -31,8 +32,19 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 
 	var lines []string
 
-	line := fmt.Sprintf("Test")
-	lines = append(lines, line)
+	cmd := exec.Command("./smlbench")
+	cmd.Dir = "/home/testground/testground/plans/smlbench/cmd"
+	stdoutStderr, err := cmd.CombinedOutput()
+	if err != nil {
+		http.Error(w, "500 Exception", http.StatusInternalServerError)
+		log.Fatal(err)
+		return
+	}
+
+	output := strings.Split(string(stdoutStderr), "\n")
+	for _, line := range output {
+		lines = append(lines, line)
+	}
 	io.WriteString(w, strings.Join(lines, "\n"))
 }
 
